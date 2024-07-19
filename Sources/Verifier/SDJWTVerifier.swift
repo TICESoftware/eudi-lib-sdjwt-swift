@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 import Foundation
-import JSONWebKey
-import JSONWebSignature
+import JOSESwift
 
 public protocol VerifierProtocol {
   associatedtype ReturnType
@@ -37,6 +36,7 @@ public enum SDJWTVerifierError: Error {
   case failedToCreateVerifier
   case expiredJwt
   case notValidYetJwt
+  case notImplemented
 }
 
 /// `SDJWTVerifier` is a class for verifying SD JSON Web Tokens (SDJWT) in a Swift application.
@@ -109,7 +109,7 @@ public class SDJWTVerifier {
         let extractedKey = try sdjwt.extractHoldersPublicKey()
         try keyBindingVerifier(kbJwt, extractedKey).verify()
 
-        if let sdHash = try? kbJwt.payloadJSON()["sd_hash"].stringValue {
+        if let sdHash = try? kbJwt.payloadJSON()[Keys.sdHash.rawValue].stringValue {
           if sdHash != sdjwt.delineatedCompactSerialisation {
             throw SDJWTVerifierError.keyBindingFailed(description: "No KB provided")
           }

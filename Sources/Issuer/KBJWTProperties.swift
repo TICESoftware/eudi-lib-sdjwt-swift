@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 European Commission
+ * Copyright (c) 2024 European Commission
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import Foundation
 import JOSESwift
 
-extension SignatureAlgorithm: CaseIterable {
-  public static var allCases: [SignatureAlgorithm] {
-      return [.HS256, .HS384, .HS512, .RS256, .RS384, .RS512, .ES256, .ES384, .ES512, .PS256, .PS384, .PS512]
+public struct KBJWTProperties {
+  
+  public internal(set) var alg: SignatureAlgorithm
+  public internal(set) var iat: Date
+  public internal(set) var aud: String
+  public internal(set) var nonce: String
+  
+  public init(alg: SignatureAlgorithm, iat: Date = Date(), aud: String, nonce: String) {
+    self.alg = alg
+    self.iat = iat
+    self.aud = aud
+    self.nonce = nonce
   }
 }

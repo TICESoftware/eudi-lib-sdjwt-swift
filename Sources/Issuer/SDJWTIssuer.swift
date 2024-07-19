@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import Foundation
-import JSONWebSignature
+import JOSESwift
 import SwiftyJSON
 
 public class SDJWTIssuer {
@@ -22,9 +22,9 @@ public class SDJWTIssuer {
   /// Enum to represent the purpose of the JWT.
   enum Purpose {
     /// Used for JWT issuance.
-    case issuance(JWSRegisteredFieldsHeader, ClaimSet)
+    case issuance(JWSHeader, ClaimSet)
     /// Used for JWT presentation.
-    case presentation(SignedSDJWT, [Disclosure], KBJWT?)
+    case presentation(SignedSDJWT, [Disclosure], KBJWTProperties?)
   }
 
   // MARK: - Lifecycle
@@ -46,7 +46,7 @@ public class SDJWTIssuer {
   ///
   public static func issue<KeyType>(
     issuersPrivateKey: KeyType,
-    header: JWSRegisteredFieldsHeader,
+    header: JWSHeader,
     decoys: Int = 0,
     @SDJWTBuilder buildSDJWT: () throws -> SdElement
   ) throws -> SignedSDJWT {
@@ -68,13 +68,13 @@ public class SDJWTIssuer {
     holdersPrivateKey: KeyType,
     signedSDJWT: SignedSDJWT,
     disclosuresToPresent: [Disclosure],
-    keyBindingJWT: KBJWT?
+    keyBindingJWTProperties: KBJWTProperties?
   ) throws -> SignedSDJWT {
     try createSDJWT(
       purpose: .presentation(
         signedSDJWT,
         disclosuresToPresent,
-        keyBindingJWT
+        keyBindingJWTProperties
       ),
       signingKey: holdersPrivateKey
     )
@@ -115,15 +115,29 @@ public class SDJWTIssuer {
       )
       return try createSignedSDJWT(sdJwt: ungsingedSDJWT, issuersPrivateKey: signingKey)
       // ..........
-    case .presentation(let signedJWT, let selectedDisclosures, let KBJWT):
+    case .presentation(let signedJWT, let selectedDisclosures, let kbJWTProperties):
       let signedJWT = signedJWT.disclosuresToPresent(disclosures: selectedDisclosures)
-      if let KBJWT {
-        return try createKeyBondedSDJWT(signedSDJWT: signedJWT, kbJWT: KBJWT, holdersPrivateKey: signingKey)
+      if let kbJWTProperties {
+        let kbJWT = try createKBJWT(signedJWT: signedJWT, kbJWTProperties: kbJWTProperties)
+        return try createKeyBondedSDJWT(signedSDJWT: signedJWT, kbJWT: kbJWT, holdersPrivateKey: signingKey)
       }
       return signedJWT
       // ..........
     }
 
+  }
+  
+  static func createKBJWT(signedJWT: SignedSDJWT, kbJWTProperties: KBJWTProperties) throws -> JWT {
+    let kbJwtHeader = JWSHeader(
+      algorithm: kbJWTProperties.alg
+    )
+    let kbJwtPayload: JSON = [
+      Keys.iat.rawValue: kbJWTProperties.iat.timeIntervalSince1970.rounded(),
+      Keys.sdHash.rawValue: signedJWT.delineatedCompactSerialisation,
+      Keys.nonce.rawValue: kbJWTProperties.nonce,
+      Keys.aud.rawValue: kbJWTProperties.aud,
+    ]
+    return try JWT(header: kbJwtHeader, kbJwtPayload: kbJwtPayload)
   }
 
   /// Create a signed SDJWT without key binding.

@@ -14,25 +14,24 @@
  * limitations under the License.
  */
 import Foundation
-import JSONWebAlgorithms
-import JSONWebSignature
+import JOSESwift
 import SwiftyJSON
 
 public struct JWT: JWTRepresentable {
 
   // MARK: - Properties
 
-  var header: JWSRegisteredFieldsHeader
+  var header: JWSHeader
   var payload: JSON
 
   // MARK: - Lifecycle
 
-  public init(header: JWSRegisteredFieldsHeader, payload: JSON) throws {
+  public init(header: JWSHeader, payload: JSON) throws {
     guard header.algorithm?.rawValue != Keys.none.rawValue else {
       throw SDJWTError.noneAsAlgorithm
     }
 
-    guard SigningAlgorithm.allCases.map({$0.rawValue}).contains(header.algorithm?.rawValue) else {
+    guard SignatureAlgorithm.allCases.map({$0.rawValue}).contains(header.algorithm?.rawValue) else {
       throw SDJWTError.macAsAlgorithm
     }
 
@@ -40,12 +39,12 @@ public struct JWT: JWTRepresentable {
     self.payload = payload
   }
 
-  public init(header: JWSRegisteredFieldsHeader, kbJwtPayload: JSON) throws {
+  public init(header: JWSHeader, kbJwtPayload: JSON) throws {
     guard header.algorithm?.rawValue != Keys.none.rawValue else {
       throw SDJWTError.noneAsAlgorithm
     }
 
-    guard SigningAlgorithm.allCases.map({$0.rawValue}).contains(header.algorithm?.rawValue) else {
+    guard SignatureAlgorithm.allCases.map({$0.rawValue}).contains(header.algorithm?.rawValue) else {
       throw SDJWTError.macAsAlgorithm
     }
     self.header = header
@@ -57,11 +56,12 @@ public struct JWT: JWTRepresentable {
 
   func sign<KeyType>(key: KeyType) throws -> JWS {
     let unsignedJWT = try self.asUnsignedJWT()
-      return try JWS.init(payload: unsignedJWT.payload, protectedHeader: unsignedJWT.header, key: key)
+    guard let algorithm = header.algorithm, let signer = Signer(signingAlgorithm: algorithm, key: key) else { throw SDJWTError.noneAsAlgorithm }
+    return try JWS.init(header: unsignedJWT.header, payload: Payload(unsignedJWT.payload), signer: signer)
   }
 
   mutating func addKBTyp() {
-    self.header.type = "kb+jwt"
+    self.header.typ = "kb+jwt"
   }
 }
 

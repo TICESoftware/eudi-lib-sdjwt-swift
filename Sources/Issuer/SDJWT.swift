@@ -14,12 +14,8 @@
  * limitations under the License.
  */
 import Foundation
-import JSONWebKey
-import JSONWebSignature
-import JSONWebToken
+import JOSESwift
 import SwiftyJSON
-
-public typealias KBJWT = JWT
 
 struct SDJWT {
 
@@ -31,7 +27,7 @@ struct SDJWT {
 
   // MARK: - Lifecycle
 
-  init(jwt: JWT, disclosures: [Disclosure], kbJWT: KBJWT?) throws {
+  init(jwt: JWT, disclosures: [Disclosure], kbJWT: JWT?) throws {
     self.jwt = jwt
     self.disclosures = disclosures
     self.kbJwt = kbJWT
@@ -77,7 +73,7 @@ public struct SignedSDJWT {
 
   var delineatedCompactSerialisation: String {
     let separator = "~"
-      let input = ([jwt.compactSerialization] + disclosures).reduce("") { $0.isEmpty ? $1 : $0 + separator + $1 } + separator
+    let input = ([jwt.compactSerializedString] + disclosures).reduce("") { $0.isEmpty ? $1 : $0 + separator + $1 } + separator
     return DigestCreator()
       .hashAndBase64Encode(
         input: input
@@ -86,14 +82,14 @@ public struct SignedSDJWT {
 
   // MARK: - Lifecycle
 
-  init(
+  public init(
     serializedJwt: String,
     disclosures: [Disclosure],
     serializedKbJwt: String?
   ) throws {
-    self.jwt = try JWS(jwsString: serializedJwt)
+    self.jwt = try JWS(compactSerialization: serializedJwt)
     self.disclosures = disclosures
-    self.kbJwt = try? JWS(jwsString: serializedKbJwt ?? "")
+    self.kbJwt = try serializedKbJwt.map(JWS.init(compactSerialization:))
   }
 
   private init?<KeyType>(sdJwt: SDJWT, issuersPrivateKey: KeyType) {
@@ -146,16 +142,16 @@ public struct SignedSDJWT {
   }
 
   func toSDJWT() throws -> SDJWT {
-      if let kbJwtHeader = kbJwt?.protectedHeader,
+      if let kbJwtHeader = kbJwt?.header,
        let kbJWtPayload = try? kbJwt?.payloadJSON() {
       return try SDJWT(
-        jwt: JWT(header: jwt.protectedHeader, payload: jwt.payloadJSON()),
+        jwt: JWT(header: jwt.header, payload: jwt.payloadJSON()),
         disclosures: disclosures,
         kbJWT: JWT(header: kbJwtHeader, kbJwtPayload: kbJWtPayload))
     }
 
     return try SDJWT(
-      jwt: JWT(header: jwt.protectedHeader, payload: jwt.payloadJSON()),
+      jwt: JWT(header: jwt.header, payload: jwt.payloadJSON()),
       disclosures: disclosures,
       kbJWT: nil)
   }
@@ -168,11 +164,12 @@ public struct SignedSDJWT {
       throw SDJWTVerifierError.keyBindingFailed(description: "Failled to find holders public key")
     }
 
-    guard let jwkObject = try? JSONDecoder.jwt.decode(JWK.self, from: jwk.rawData()) else {
-      throw SDJWTVerifierError.keyBindingFailed(description: "failled to extract key type")
-    }
-
-    return jwkObject
+    throw SDJWTVerifierError.notImplemented
+//    guard let jwkObject = try? JSONDecoder.jwt.decode(JWK.self, from: jwk.rawData()) else {
+//      throw SDJWTVerifierError.keyBindingFailed(description: "failled to extract key type")
+//    }
+//
+//    return jwkObject
   }
 }
 

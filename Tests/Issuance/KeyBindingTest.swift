@@ -83,29 +83,14 @@ final class KeyBindingTest: XCTestCase {
         signingKey: issuersKeyPair.private
     )
 
-    let compactSerializer = CompactSerialiser(signedSDJWT: issuance)
-    let jwtString = compactSerializer.serialised
-
-    let digestCreator = DigestCreator()
-    let out = digestCreator.hashAndBase64Encode(input: jwtString) ?? ""
-
-    let kbjwtPayload: ClaimSet = (JSON(
-      [
-        Keys.aud.rawValue: "https://example.com/verifier",
-        Keys.iat.rawValue: Date().timeIntervalSince1970,
-        Keys.nonce.rawValue: "1234567890",
-        Keys.sdHash.rawValue: out
-      ] as [String: Any]
-    ), [])
-
     let presentation = try SDJWTIssuer.createSDJWT(
       purpose: .presentation(
         issuance,
         issuance.disclosures,
-        KBJWT(
-          header: DefaultJWSHeaderImpl(algorithm: .ES256),
-          payload: kbjwtPayload.value
-        )
+        KBJWTProperties(alg: .ES256,
+                        iat: Date(),
+                        aud: "https://example.com/verifier",
+                        nonce: "1234567890")
       ),
       signingKey: holdersKeyPair.private
     )

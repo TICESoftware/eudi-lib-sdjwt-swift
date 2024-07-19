@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 import Foundation
-import JSONWebSignature
+import JOSESwift
 import SwiftyJSON
 
 typealias Base64String = String
-typealias UnsignedJWT = (header: JWSRegisteredFieldsHeader, payload: Data)
+typealias UnsignedJWT = (header: JWSHeader, payload: Data)
 
 protocol JWTRepresentable {
 
-  var header: JWSRegisteredFieldsHeader { get }
+  var header: JWSHeader { get }
   var payload: JSON { get }
 
   func asUnsignedJWT() throws -> UnsignedJWT
   func sign<KeyType>(key: KeyType) throws -> JWS
 
-  init(header: JWSRegisteredFieldsHeader, payload: JSON) throws
+  init(header: JWSHeader, payload: JSON) throws
 }
 
 extension JWTRepresentable {

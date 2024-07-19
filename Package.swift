@@ -20,18 +20,18 @@ let package = Package(
     dependencies: [
         .package(
           url: "https://github.com/SwiftyJSON/SwiftyJSON.git",
-          from: "5.0.1"
+          from: "4.3.0"
         ),
         .package(
-          url: "https://github.com/beatt83/jose-swift.git",
-          from: "3.1.0"
+          url: "https://github.com/niscy-eudiw/JOSESwift",
+          from: "2.4.0-gcm"
         )
     ],
     targets: [
         .target(
             name: "eudi-lib-sdjwt-swift",
             dependencies: [
-                "jose-swift",
+                "JOSESwift",
                 .product(name: "SwiftyJSON", package: "swiftyjson")
             ],
             path: "Sources",

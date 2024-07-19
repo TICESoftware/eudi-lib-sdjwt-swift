@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 import Foundation
-import JSONWebKey
-import JSONWebSignature
+import JOSESwift
 import SwiftyJSON
 
 public class KeyBindingVerifier: VerifierProtocol {
@@ -27,7 +26,7 @@ public class KeyBindingVerifier: VerifierProtocol {
        challenge: JWS,
        extractedKey: JWK) throws {
 
-      guard challenge.protectedHeader.type == "kb+jwt" else {
+      guard challenge.header.typ == "kb+jwt" else {
       throw SDJWTVerifierError.keyBindingFailed(description: "no kb+jwt as typ claim")
     }
 
