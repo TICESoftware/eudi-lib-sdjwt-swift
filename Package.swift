@@ -23,8 +23,8 @@ let package = Package(
           from: "4.3.0"
         ),
         .package(
-          url: "https://github.com/beatt83/jose-swift.git",
-          from: "3.1.0"
+          url: "https://github.com/TICESoftware/jose-swift",
+          branch: "certificate_chain"
         )
     ],
     targets: [
