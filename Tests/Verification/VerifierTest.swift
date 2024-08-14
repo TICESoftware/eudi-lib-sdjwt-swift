@@ -333,6 +333,81 @@ final class VerifierTest: XCTestCase {
     XCTAssertEqual(sdHash, holder.delineatedCompactSerialisation)
     XCTAssertNoThrow(try verifier.get())
   }
+  
+  func testVerifierWhenProvidingAKeyBindingJWT_WhenGettingJSONPaths_ThenSelectsCorrectDisclosures () throws {
+    let holdersJWK = holdersKeyPair.public
+    let jwk = try holdersJWK.jwk
+    
+    let issuerSignedSDJWT = try SDJWTIssuer.issue(
+      issuersPrivateKey: issuersKeyPair.private,
+      header: DefaultJWSHeaderImpl(algorithm: .ES256)
+    ) {
+      ConstantClaims.iat(time: Date())
+      ConstantClaims.exp(time: Date() + 3600)
+      ConstantClaims.iss(domain: "https://example.com/issuer")
+      FlatDisclosedClaim("sub", "6c5c0a49-b589-431d-bae7-219122a9ec2c")
+      FlatDisclosedClaim("given_name", "太郎")
+      FlatDisclosedClaim("family_name", "山田")
+      FlatDisclosedClaim("locality", "München")
+      ObjectClaim("place_of_birth") {
+        FlatDisclosedClaim("locality", "Berlin")
+      }
+      ObjectClaim("address") {
+        FlatDisclosedClaim("street_address", "東京都港区芝公園４丁目２−８")
+        FlatDisclosedClaim("locality", "Köln")
+        FlatDisclosedClaim("country", "JP")
+      }
+      FlatDisclosedClaim("birthdate", "1940-01-01")
+      FlatDisclosedClaim("nationalities", ["DE"])
+      ObjectClaim("cnf") {
+        ObjectClaim("jwk") {
+          PlainClaim("kty", "EC")
+          PlainClaim("y", jwk.y?.base64URLEncode())
+          PlainClaim("x", jwk.x?.base64URLEncode())
+          PlainClaim("crv", jwk.curve)
+        }
+      }
+    }
+    
+    let encoded = CompactSerialiser(signedSDJWT: issuerSignedSDJWT).serialised
+    print(encoded)
+    
+    let paths = [
+      "$.place_of_birth.locality",
+      "$.nationalities"
+    ]
+    
+    let disclosureSelector = DisclosureSelector(signedSDJWT: issuerSignedSDJWT)
+    let disclosures = try disclosureSelector.selectDisclosures(paths: paths)
+    
+    let holder = try SDJWTIssuer
+      .presentation(
+        holdersPrivateKey: holdersKeyPair.private,
+        signedSDJWT: issuerSignedSDJWT,
+        disclosuresToPresent: disclosures,
+        keyBindingJWT: nil
+      )
+    
+    let verifier = SDJWTVerifier(
+      sdJwt: holder
+    ).verifyPresentation { jws in
+      try SignatureVerifier(
+        signedJWT: jws,
+        publicKey: issuersKeyPair.public
+      )
+      
+    } claimVerifier: { _, _ in
+      ClaimsVerifier()
+    }
+    
+    XCTAssertNoThrow(try verifier.get())
+    
+    let claims = try holder.recreateClaims()
+    let recreatedClaimes = claims.recreatedClaims
+    
+    XCTAssertEqual(recreatedClaimes["place_of_birth", "locality"], "Berlin")
+    XCTAssertEqual(recreatedClaimes["nationalities"], ["DE"])
+  }
 
   func testSerialiseWhenChosingEnvelopeFormat_AppylingEnvelopeBinding_ThenExpectACorrectJWT() throws {
     let serializerTest = SerialiserTest()
