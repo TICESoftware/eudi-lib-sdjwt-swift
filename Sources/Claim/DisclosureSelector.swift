@@ -22,7 +22,7 @@ public enum DisclosureSelectorError: Error {
   case disclosureNotDigestable
 }
 
-class DisclosureSelector {
+public class DisclosureSelector {
   
   private var signedSDJWT: SignedSDJWT
   
@@ -30,7 +30,7 @@ class DisclosureSelector {
     self.signedSDJWT = signedSDJWT
   }
   
-  func selectDisclosures(paths: [String]) throws -> [Disclosure] {
+  public func selectDisclosures(paths: [String]) throws -> [Disclosure] {
     let digestCreator = DigestCreator()
     let payload = try signedSDJWT.jwt.payloadJSON()
     let allDisclosures = signedSDJWT.disclosures
