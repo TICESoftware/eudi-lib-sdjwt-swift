@@ -109,7 +109,7 @@ public class SDJWTVerifier {
         let extractedKey = try sdjwt.extractHoldersPublicKey()
         try keyBindingVerifier(kbJwt, extractedKey).verify()
 
-        if let sdHash = try? kbJwt.payloadJSON()["sd_hash"].stringValue {
+        if let sdHash = try? kbJwt.payloadJSON()[Keys.sdHash.rawValue].stringValue {
           if sdHash != sdjwt.delineatedCompactSerialisation {
             throw SDJWTVerifierError.keyBindingFailed(description: "No KB provided")
           }

@@ -283,28 +283,16 @@ final class VerifierTest: XCTestCase {
         }
       }
     }
-
-    let sdHash = DigestCreator()
-      .hashAndBase64Encode(
-        input: CompactSerialiser(
-          signedSDJWT: issuerSignedSDJWT
-        ).serialised
-      ) ?? ""
+    
+    let disclosureCount = 4
+    let selectedDisclosures = Array(issuerSignedSDJWT.disclosures[0..<disclosureCount])
 
     let holder = try SDJWTIssuer
       .presentation(
         holdersPrivateKey: holdersKeyPair.private,
         signedSDJWT: issuerSignedSDJWT,
-        disclosuresToPresent: issuerSignedSDJWT.disclosures,
-        keyBindingJWT: KBJWT(
-          header: DefaultJWSHeaderImpl(algorithm: .ES256),
-          kbJwtPayload: .init([
-            Keys.nonce.rawValue: "123456789",
-            Keys.aud.rawValue: "example.com",
-            Keys.iat.rawValue: 1694600000,
-            Keys.sdHash.rawValue: sdHash
-          ])
-        )
+        disclosuresToPresent: selectedDisclosures,
+        keyBindingJWTProperties: KBJWTProperties(alg: .ES256, iat: Date(timeIntervalSince1970: 1694600000), aud: "example.com", nonce: "123456789")
       )
 
     let verifier = SDJWTVerifier(
@@ -330,8 +318,8 @@ final class VerifierTest: XCTestCase {
       )
     }
 
-    XCTAssertEqual(sdHash, holder.delineatedCompactSerialisation)
     XCTAssertNoThrow(try verifier.get())
+    XCTAssertEqual(holder.disclosures.count, disclosureCount)
   }
   
   func testVerifierWhenProvidingAKeyBindingJWT_WhenGettingJSONPaths_ThenSelectsCorrectDisclosures () throws {
@@ -385,7 +373,7 @@ final class VerifierTest: XCTestCase {
         holdersPrivateKey: holdersKeyPair.private,
         signedSDJWT: issuerSignedSDJWT,
         disclosuresToPresent: disclosures,
-        keyBindingJWT: nil
+        keyBindingJWTProperties: nil
       )
     
     let verifier = SDJWTVerifier(

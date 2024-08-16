@@ -19,8 +19,6 @@ import JSONWebSignature
 import JSONWebToken
 import SwiftyJSON
 
-public typealias KBJWT = JWT
-
 struct SDJWT {
 
   // MARK: - Properties
@@ -31,7 +29,7 @@ struct SDJWT {
 
   // MARK: - Lifecycle
 
-  init(jwt: JWT, disclosures: [Disclosure], kbJWT: KBJWT?) throws {
+  init(jwt: JWT, disclosures: [Disclosure], kbJWT: JWT?) throws {
     self.jwt = jwt
     self.disclosures = disclosures
     self.kbJwt = kbJWT
