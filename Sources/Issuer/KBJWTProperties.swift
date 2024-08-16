@@ -15,16 +15,16 @@
  */
 
 import Foundation
-import JSONWebAlgorithms
+import JOSESwift
 
 public struct KBJWTProperties {
   
-  public internal(set) var alg: SigningAlgorithm
+  public internal(set) var alg: SignatureAlgorithm
   public internal(set) var iat: Date
   public internal(set) var aud: String
   public internal(set) var nonce: String
   
-  public init(alg: SigningAlgorithm, iat: Date = Date(), aud: String, nonce: String) {
+  public init(alg: SignatureAlgorithm, iat: Date = Date(), aud: String, nonce: String) {
     self.alg = alg
     self.iat = iat
     self.aud = aud

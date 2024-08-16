@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 import Foundation
-import JSONWebKey
-import JSONWebSignature
+import JOSESwift
 
 public protocol VerifierProtocol {
   associatedtype ReturnType
@@ -37,6 +36,7 @@ public enum SDJWTVerifierError: Error {
   case failedToCreateVerifier
   case expiredJwt
   case notValidYetJwt
+  case notImplemented
 }
 
 /// `SDJWTVerifier` is a class for verifying SD JSON Web Tokens (SDJWT) in a Swift application.

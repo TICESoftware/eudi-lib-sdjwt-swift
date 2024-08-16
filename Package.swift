@@ -23,15 +23,15 @@ let package = Package(
           from: "4.3.0"
         ),
         .package(
-          url: "https://github.com/TICESoftware/jose-swift",
-          branch: "certificate_chain"
+          url: "https://github.com/airsidemobile/JOSESwift.git",
+          from: "2.3.0"
         )
     ],
     targets: [
         .target(
             name: "eudi-lib-sdjwt-swift",
             dependencies: [
-                "jose-swift",
+                "JOSESwift",
                 .product(name: "SwiftyJSON", package: "swiftyjson")
             ],
             path: "Sources",

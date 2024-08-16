@@ -410,18 +410,18 @@ final class VerifierTest: XCTestCase {
     _ = try SignatureVerifier(
         signedJWT: JWS(
             payload: envelopeSerializer.data,
-            protectedHeader: DefaultJWSHeaderImpl(algorithm: .ES256),
+            header: DefaultJWSHeaderImpl(algorithm: .ES256),
             key: holdersKeyPair.private
         ),
         publicKey: holdersKeyPair.public)
 
     let jwt = try JWS(
       payload: envelopeSerializer.data,
-      protectedHeader: DefaultJWSHeaderImpl(algorithm: .ES256),
+      header: DefaultJWSHeaderImpl(algorithm: .ES256),
       key: holdersKeyPair.private
     )
 
-    let envelopedJws = try JWS(jwsString: jwt.compactSerialization)
+    let envelopedJws = try JWS(jwsString: jwt.compactSerializedString)
 
     let verifyEnvelope =
     try SDJWTVerifier(parser: EnvelopedParser(data: envelopeSerializer.data))

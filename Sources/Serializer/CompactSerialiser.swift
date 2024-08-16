@@ -40,11 +40,11 @@ public class CompactSerialiser: SerialiserProtocol {
 public extension SerialisationFormat {
   func serialise(signedSDJWT: SignedSDJWT) -> String {
     var output = ""
-    output += signedSDJWT.jwt.compactSerialization
+    output += signedSDJWT.jwt.compactSerializedString
     output += signedSDJWT.disclosures.reduce(into: "~", { partialResult, disclosure in
       partialResult += disclosure + "~"
     })
-    output += signedSDJWT.kbJwt?.compactSerialization ?? ""
+    output += signedSDJWT.kbJwt?.compactSerializedString ?? ""
     return output
   }
 }
