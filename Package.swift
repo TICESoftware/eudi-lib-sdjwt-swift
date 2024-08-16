@@ -23,8 +23,8 @@ let package = Package(
           from: "4.3.0"
         ),
         .package(
-          url: "https://github.com/airsidemobile/JOSESwift.git",
-          from: "2.3.0"
+          url: "https://github.com/niscy-eudiw/JOSESwift",
+          from: "2.4.0-gcm"
         )
     ],
     targets: [
