@@ -17,7 +17,8 @@
 import Foundation
 
 public enum DisclosureSelectorError: Error {
-  case pathNotJSONPath
+  case pathNotFromJSONRoot(String)
+  case pathNotJSONPath(String)
   case disclosureNotDecodable
   case disclosureNotDigestable
 }
@@ -39,9 +40,14 @@ public class DisclosureSelector {
       guard let decodedDisclosure = disclosure.base64URLDecode() else { throw DisclosureSelectorError.disclosureNotDecodable }
       guard let disclosureDigest = digestCreator.hashAndBase64Encode(input: disclosure) else { throw DisclosureSelectorError.disclosureNotDigestable }
       return try paths.contains { path in
-        guard path.hasPrefix("$.") else { throw DisclosureSelectorError.pathNotJSONPath }
-        let endParts = path.split(separator: ".").dropFirst().map(String.init)
-        guard let key = endParts.last else { throw DisclosureSelectorError.pathNotJSONPath }
+        var parts = path.split(separator: ".")
+        if parts.first == "$" {
+          parts.dropFirst()
+        } else {
+          print("Path did not start with $: \(path). Interpreting it as $.\(path)")
+        }
+        let endParts = parts.map(String.init)
+        guard let key = endParts.last else { throw DisclosureSelectorError.pathNotJSONPath(path) }
         let nestingKeys = Array(endParts.dropLast())
         let objectContainingSDArray = payload[nestingKeys]
         let sdArray = objectContainingSDArray[Keys.sd.rawValue].arrayValue.compactMap(\.string)
