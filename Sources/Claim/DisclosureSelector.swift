@@ -31,29 +31,35 @@ public class DisclosureSelector {
     self.signedSDJWT = signedSDJWT
   }
   
-  public func selectDisclosures(paths: [String]) throws -> [Disclosure] {
-    let digestCreator = DigestCreator()
-    let payload = try signedSDJWT.jwt.payloadJSON()
-    let allDisclosures = signedSDJWT.disclosures
-    
-    let selectedDisclosures = try allDisclosures.filter({ disclosure in
-      guard let decodedDisclosure = disclosure.base64URLDecode() else { throw DisclosureSelectorError.disclosureNotDecodable }
-      guard let disclosureDigest = digestCreator.hashAndBase64Encode(input: disclosure) else { throw DisclosureSelectorError.disclosureNotDigestable }
-      return try paths.contains { path in
-        var parts = path.split(separator: ".")
-        if parts.first == "$" {
-          parts.dropFirst()
-        } else {
-          print("Path did not start with $: \(path). Interpreting it as $.\(path)")
-        }
-        let endParts = parts.map(String.init)
-        guard let key = endParts.last else { throw DisclosureSelectorError.pathNotJSONPath(path) }
-        let nestingKeys = Array(endParts.dropLast())
-        let objectContainingSDArray = payload[nestingKeys]
-        let sdArray = objectContainingSDArray[Keys.sd.rawValue].arrayValue.compactMap(\.string)
-        return sdArray.contains(disclosureDigest) && decodedDisclosure.objectProperty.key == key
-      }
-    })
-    return selectedDisclosures
-  }
+    public func selectDisclosures(paths: [String]) throws -> [Disclosure] {
+        let digestCreator = DigestCreator()
+        let payload = try signedSDJWT.jwt.payloadJSON()
+        let allDisclosures = signedSDJWT.disclosures
+        let selectedDisclosures = try allDisclosures.filter({ disclosure in
+            guard let decodedDisclosure = disclosure.base64URLDecode() else { throw DisclosureSelectorError.disclosureNotDecodable }
+            guard let disclosureDigest = digestCreator.hashAndBase64Encode(input: disclosure) else { throw DisclosureSelectorError.disclosureNotDigestable }
+            return try paths.contains { path in
+                var parts = path.split(separator: ".")
+                if parts.first == "$" {
+                    parts = Array(parts.dropFirst())
+                } else {
+                    print("Path did not start with $: \(path). Interpreting it as $.\(path)")
+                }
+                let endParts = parts.map(String.init)
+                guard let key = endParts.last else {
+                    throw DisclosureSelectorError.pathNotJSONPath(path)
+                }
+                if endParts.count > 1 {
+                    let nestingKeys = Array(endParts.dropLast())
+                    let objectContainingSDArray = payload[nestingKeys]
+                    let sdArray = objectContainingSDArray[Keys.sd.rawValue].arrayValue.compactMap(\.string)
+                    return sdArray.contains(disclosureDigest) && decodedDisclosure.objectProperty.key == key
+                } else {
+                    return decodedDisclosure.objectProperty.key == endParts.first
+                }
+                
+            }
+        })
+        return selectedDisclosures
+    }
 }
