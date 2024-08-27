@@ -82,7 +82,7 @@ public struct SignedSDJWT {
 
   // MARK: - Lifecycle
 
-  init(
+  public init(
     serializedJwt: String,
     disclosures: [Disclosure],
     serializedKbJwt: String?
